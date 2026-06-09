@@ -4,7 +4,7 @@
        ENVIRONMENT DIVISION.
         INPUT-OUTPUT SECTION.
               FILE-CONTROL.
-                SELECT CLIENTES ASSIGN TO 'dados_clientes_cobol.txt'
+                SELECT CLIENTES ASSIGN TO 'dados-clientes-cobol.txt'
                     ORGANIZATION IS LINE SEQUENTIAL.
 
        DATA DIVISION.
@@ -37,8 +37,7 @@
         01  CPF-DESTINO            PIC X(11).
         01  SALDO-DESTINO          PIC S9(13)V99 SIGN LEADING SEPARATE.
         01  MOVIMENTACOES-DESTINO  PIC 9(04).
-
-
+        01  WS-OPCAO-SAIR          PIC X(01) VALUE 'N'.
 
        PROCEDURE DIVISION.
             PERFORM AVALIAR-ACESSO.
@@ -46,43 +45,45 @@
             STOP RUN.
 
         AVALIAR-ACESSO.
-            DISPLAY "Insira seu CPF: ".
-            ACCEPT WS-CPF.
-            DISPLAY "Insira sua senha: ".
-            ACCEPT WS-SENHA.    
-            MOVE 'N' TO CLIENTE-ENCONTRADO.
-            MOVE 'N' TO LEITURA-FINALIZADA.
-            OPEN INPUT CLIENTES.
             PERFORM UNTIL CLIENTE-ENCONTRADO = 'S'
-                       OR LEITURA-FINALIZADA = 'S'
-                READ CLIENTES
-                    AT END
-                        MOVE 'S' TO LEITURA-FINALIZADA
-                    NOT AT END
-                        IF CPF = WS-CPF AND SENHA = WS-SENHA
-                            MOVE NOME          TO WS-NOME
-                            MOVE SOBRENOME     TO WS-SOBRENOME
-                            MOVE SALDO         TO WS-SALDO
-                            MOVE EM-EMPRESTIMO TO WS-EM-EMPRESTIMO
-                            MOVE LIMITE-EMPRESTIMO
-                                               TO WS-LIMITE-EMPRESTIMO
-                            MOVE MOVIMENTACOES TO WS-MOVIMENTACOES
-                            MOVE 'S'           TO CLIENTE-ENCONTRADO
-                        ELSE
-                            CONTINUE
-                        END-IF
-                END-READ
-            END-PERFORM.
-            CLOSE CLIENTES.
-               IF WS-CPF = CPF AND WS-SENHA = SENHA
-                  DISPLAY "Acesso concedido. Bem-vindo(a), "
-                  DISPLAY WS-NOME
-                  DISPLAY " " WS-SOBRENOME
-               ELSE
+                DISPLAY "Insira seu CPF: "
+                ACCEPT WS-CPF
+                DISPLAY "Insira sua senha: "
+                ACCEPT WS-SENHA    
+                MOVE 'N' TO CLIENTE-ENCONTRADO
+                MOVE 'N' TO LEITURA-FINALIZADA
+                OPEN INPUT CLIENTES
+                PERFORM UNTIL CLIENTE-ENCONTRADO = 'S'
+                           OR LEITURA-FINALIZADA = 'S'
+                    READ CLIENTES
+                        AT END
+                            MOVE 'S' TO LEITURA-FINALIZADA
+                        NOT AT END
+                            IF CPF = WS-CPF AND SENHA = WS-SENHA
+                                MOVE NOME          TO WS-NOME
+                                MOVE SOBRENOME     TO WS-SOBRENOME
+                                MOVE SALDO         TO WS-SALDO
+                                MOVE EM-EMPRESTIMO TO WS-EM-EMPRESTIMO
+                                MOVE LIMITE-EMPRESTIMO
+                                                   TO WS-LIMITE-EMPRESTIMO
+                                MOVE MOVIMENTACOES TO WS-MOVIMENTACOES
+                                MOVE 'S'           TO CLIENTE-ENCONTRADO
+                            END-IF
+                    END-READ
+                END-PERFORM
+                CLOSE CLIENTES
+                
+                IF CLIENTE-ENCONTRADO = 'S'
+                   DISPLAY "Acesso concedido. Bem-vindo(a), " WS-NOME " " WS-SOBRENOME
+                ELSE
                    DISPLAY "Acesso negado. CPF ou senha incorretos."
-                   PERFORM AVALIAR-ACESSO
-                END-IF. 
-
+                   DISPLAY "Deseja tentar novamente? (S para Sim, N para Nao): "
+                   ACCEPT WS-OPCAO-SAIR
+                   IF WS-OPCAO-SAIR = 'N' OR WS-OPCAO-SAIR = 'n'
+                       STOP RUN
+                   END-IF
+                END-IF
+            END-PERFORM.
 
         MENU-PRINCIPAL.
             DISPLAY "Menu Principal:".
@@ -108,21 +109,22 @@
                     WHEN OTHER
                         DISPLAY "Opcao invalida. Tente novamente."
                  END-EVALUATE
-                 DISPLAY "Menu Principal:"
-                 DISPLAY "1. Consultar Saldo"
-                 DISPLAY "2. Realizar Deposito"
-                 DISPLAY "3. Realizar Saque"
-                 DISPLAY "4. Realizar Emprestimo"
-                 DISPLAY "5. Realizar Transferencia"
-                 DISPLAY "6. Sair"
-                 ACCEPT OPCAO
+                 IF OPCAO NOT = 6
+                     DISPLAY "Menu Principal:"
+                     DISPLAY "1. Consultar Saldo"
+                     DISPLAY "2. Realizar Deposito"
+                     DISPLAY "3. Realizar Saque"
+                     DISPLAY "4. Realizar Emprestimo"
+                     DISPLAY "5. Realizar Transferencia"
+                     DISPLAY "6. Sair"
+                     ACCEPT OPCAO
+                 END-IF
             END-PERFORM.    
 
          CONSULTAR-SALDO.
             DISPLAY "Saldo atual: " WS-SALDO.
 
          REALIZAR-DEPOSITO.
-            OPEN OUTPUT CLIENTES.
             DISPLAY "Digite o valor do deposito: ".
             ACCEPT VALOR-TRANSACAO.
                 IF VALOR-TRANSACAO > 0
@@ -133,7 +135,7 @@
                     DISPLAY "Valor invalido. Tente novamente."
                 END-IF.
 
-         REALIZAR-SAQUE.
+          REALIZAR-SAQUE.
             DISPLAY "Digite o valor do saque: ".
             ACCEPT VALOR-TRANSACAO.
                 IF VALOR-TRANSACAO > 0 AND VALOR-TRANSACAO <= WS-SALDO
@@ -177,23 +179,23 @@
                             MOVE SALDO         TO SALDO-DESTINO
                             MOVE MOVIMENTACOES TO MOVIMENTACOES-DESTINO
                             MOVE 'S'           TO CLIENTE-ENCONTRADO
-                        ELSE
-                            CONTINUE
                         END-IF
                 END-READ
-                CLOSE CLIENTES
-                IF CLIENTE-ENCONTRADO = 'S'
-                    DISPLAY "Digite o valor da transferencia: "
-                    ACCEPT VALOR-TRANSACAO
-                        IF VALOR-TRANSACAO > 0 AND 
-                        VALOR-TRANSACAO <= WS-SALDO
-                            SUBTRACT VALOR-TRANSACAO FROM WS-SALDO
-                            ADD VALOR-TRANSACAO TO SALDO-DESTINO
-                            ADD 1 TO WS-MOVIMENTACOES
-                            ADD 1 TO MOVIMENTACOES-DESTINO
-                            DISPLAY "Concluido. Novo saldo: " WS-SALDO
-                        ELSE
-                         DISPLAY "Valor invalido ou saldo insuficiente."
-                        END-IF
-                END-IF
             END-PERFORM.
+            CLOSE CLIENTES.
+            IF CLIENTE-ENCONTRADO = 'S'
+                DISPLAY "Digite o valor da transferencia: "
+                ACCEPT VALOR-TRANSACAO
+                    IF VALOR-TRANSACAO > 0 AND 
+                    VALOR-TRANSACAO <= WS-SALDO
+                        SUBTRACT VALOR-TRANSACAO FROM WS-SALDO
+                        ADD VALOR-TRANSACAO TO SALDO-DESTINO
+                        ADD 1 TO WS-MOVIMENTACOES
+                        ADD 1 TO MOVIMENTACOES-DESTINO
+                        DISPLAY "Concluido. Novo saldo: " WS-SALDO
+                    ELSE
+                     DISPLAY "Valor invalido ou saldo insuficiente."
+                    END-IF
+            ELSE
+                DISPLAY "Cliente nao encontrado."
+            END-IF.
