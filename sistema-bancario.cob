@@ -1,3 +1,4 @@
+       >>SOURCE FORMAT FREE
        IDENTIFICATION DIVISION.
         PROGRAM-ID. SISTEMA-BANCARIO.
 
@@ -199,3 +200,4 @@
             ELSE
                 DISPLAY "Cliente nao encontrado."
             END-IF.
+            
