@@ -8,7 +8,7 @@ Uma simples implementação de um sistema bancário na linguagem COBOL para a di
 Este comando usa o GnuCOBOL para ler o arquivo de texto (`.cob`) e gerar o programa executável na máquina:
 
 ```bash
-cobc -x -o sistema-bancario sistema-bancario.cob
+cobc -x -free -o sistema-bancario sistema-bancario.cob
 ```
 
 **2.1 Comando para executar o sistema no linux:**
